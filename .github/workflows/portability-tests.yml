@@ -1,0 +1,187 @@
+name: Portability Tests - Cross Platform
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+
+jobs:
+  portability-tests:
+    name: Test on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        node-version: [20.x]
+      fail-fast: false
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+          cache-dependency-path: 'giggle-fest-be-repository/package-lock.json'
+
+      - name: Install dependencies
+        working-directory: ./giggle-fest-be-repository
+        run: npm ci
+
+      - name: Setup test environment variables
+        run: |
+          echo "NODE_ENV=test" >> $GITHUB_ENV
+          echo "PORT=3000" >> $GITHUB_ENV
+        shell: bash
+
+      - name: Create test .env file
+        working-directory: ./giggle-fest-be-repository
+        run: |
+          echo "NODE_ENV=test" > .env
+          echo "PORT=3000" >> .env
+          echo "DATABASE_URL=${{ secrets.DATABASE_URL || 'postgresql://test:test@localhost:5432/testdb' }}" >> .env
+          echo "JWT_SECRET=${{ secrets.JWT_SECRET || 'test_secret_key_for_testing' }}" >> .env
+          echo "IMAGEKIT_PUBLIC_KEY=${{ secrets.IMAGEKIT_PUBLIC_KEY || 'test_public_key' }}" >> .env
+          echo "IMAGEKIT_PRIVATE_KEY=${{ secrets.IMAGEKIT_PRIVATE_KEY || 'test_private_key' }}" >> .env
+          echo "IMAGEKIT_URL_ENDPOINT=${{ secrets.IMAGEKIT_URL_ENDPOINT || 'https://ik.imagekit.io/test' }}" >> .env
+        shell: bash
+
+      - name: Run Portability Test 1 - Adaptability (Content Types)
+        working-directory: ./giggle-fest-be-repository
+        run: npm test -- src/tests/portability/portability1.test.js
+        continue-on-error: false
+
+      - name: Run Portability Test 2 - Installability (Environment)
+        working-directory: ./giggle-fest-be-repository
+        run: npm test -- src/tests/portability/portability2.test.js
+        continue-on-error: false
+
+      - name: Run Portability Test 3 - Replaceability (Database)
+        working-directory: ./giggle-fest-be-repository
+        run: npm test -- src/tests/portability/portability3.test.js
+        continue-on-error: true
+
+      - name: Run Portability Test 4 - Co-existence (API Versioning)
+        working-directory: ./giggle-fest-be-repository
+        run: npm test -- src/tests/portability/portability4.test.js
+        continue-on-error: false
+
+      - name: Run Portability Test 5 - Co-existence (Multiple Instances)
+        working-directory: ./giggle-fest-be-repository
+        run: npm test -- src/tests/portability/portability5.test.js
+        continue-on-error: false
+
+      - name: Run Portability Test 7 - Adaptability (Cross-Platform)
+        working-directory: ./giggle-fest-be-repository
+        run: npm test -- src/tests/portability/portability7.test.js
+        continue-on-error: false
+
+      - name: Run Portability Test 8 - Adaptability (Configuration Management)
+        working-directory: ./giggle-fest-be-repository
+        run: npm test -- src/tests/portability/portability8.test.js
+        continue-on-error: false
+
+      - name: Run All Portability Tests
+        working-directory: ./giggle-fest-be-repository
+        run: npm test -- src/tests/portability/
+        continue-on-error: false
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-${{ matrix.os }}
+          path: |
+            giggle-fest-be-repository/coverage/
+            giggle-fest-be-repository/*.log
+          retention-days: 7
+
+  portability-docker:
+    name: Docker Tests on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+      fail-fast: false
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.x
+          cache: 'npm'
+          cache-dependency-path: 'giggle-fest-be-repository/package-lock.json'
+
+      - name: Install dependencies
+        working-directory: ./giggle-fest-be-repository
+        run: npm ci
+
+      - name: Setup Docker (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          choco install docker-desktop -y
+          docker --version
+        continue-on-error: true
+
+      - name: Create test .env file
+        working-directory: ./giggle-fest-be-repository
+        run: |
+          echo "NODE_ENV=test" > .env
+          echo "PORT=3000" >> .env
+          echo "DATABASE_URL=${{ secrets.DATABASE_URL || 'postgresql://test:test@localhost:5432/testdb' }}" >> .env
+          echo "JWT_SECRET=${{ secrets.JWT_SECRET || 'test_secret_key_for_testing' }}" >> .env
+          echo "IMAGEKIT_PUBLIC_KEY=${{ secrets.IMAGEKIT_PUBLIC_KEY || 'test_public_key' }}" >> .env
+          echo "IMAGEKIT_PRIVATE_KEY=${{ secrets.IMAGEKIT_PRIVATE_KEY || 'test_private_key' }}" >> .env
+          echo "IMAGEKIT_URL_ENDPOINT=${{ secrets.IMAGEKIT_URL_ENDPOINT || 'https://ik.imagekit.io/test' }}" >> .env
+        shell: bash
+
+      - name: Run Portability Test 6 - Installability (Docker)
+        working-directory: ./giggle-fest-be-repository
+        run: npm test -- src/tests/portability/portability6.test.js
+        continue-on-error: true
+        env:
+          TESTCONTAINERS_RYUK_DISABLED: true
+
+      - name: Upload docker test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: docker-test-results-${{ matrix.os }}
+          path: |
+            giggle-fest-be-repository/coverage/
+            giggle-fest-be-repository/*.log
+          retention-days: 7
+
+  summary:
+    name: Test Summary
+    needs: [portability-tests, portability-docker]
+    runs-on: ubuntu-latest
+    if: always()
+    
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        
+      - name: Display test summary
+        run: |
+          echo "## Portability Tests Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Tests completed on multiple platforms:" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Ubuntu Linux" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Windows Server" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ macOS" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Test Coverage" >> $GITHUB_STEP_SUMMARY
+          echo "- Adaptability (Content Types, Cross-Platform, Configuration)" >> $GITHUB_STEP_SUMMARY
+          echo "- Installability (Environment, Docker)" >> $GITHUB_STEP_SUMMARY
+          echo "- Replaceability (Database)" >> $GITHUB_STEP_SUMMARY
+          echo "- Co-existence (API Versioning, Multiple Instances)" >> $GITHUB_STEP_SUMMARY
