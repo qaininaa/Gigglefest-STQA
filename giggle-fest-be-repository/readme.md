@@ -1,5 +1,11 @@
 # GiggleFest Backend - Microservices REST API Event Ticketing Management System
 
+[![Portability Tests](https://github.com/qaininaa/Gigglefest-STQA/actions/workflows/portability-tests.yml/badge.svg)](https://github.com/qaininaa/Gigglefest-STQA/actions/workflows/portability-tests.yml)
+[![Cross-Platform](https://img.shields.io/badge/platform-Linux%20%7C%20Windows%20%7C%20macOS-blue)](https://github.com/qaininaa/Gigglefest-STQA)
+[![Node.js](https://img.shields.io/badge/node-%3E%3D20.0.0-brightgreen)](https://nodejs.org)
+[![Docker](https://img.shields.io/badge/docker-supported-blue)](https://www.docker.com/)
+[![ISO/IEC 25010](https://img.shields.io/badge/ISO%2FIEC%2025010-Portability-orange)](https://iso25000.com/index.php/en/iso-25000-standards/iso-25010)
+
 ## Description
 
 GiggleFest Backend is a microservices-based RESTful API service that powers the event ticketing management system. Built with a microservices architecture, the system is divided into independent, specialized services that handle specific business domains. This backend service provides the core infrastructure for the GiggleFest platform, enabling users to discover, purchase, and manage tickets for various events. Built with Node.js and Express, this backend system delivers robust APIs for event organizers to create and manage events, while offering attendees a seamless ticket purchasing experience with secure payment processing and promotional offers. The backend handles all server-side operations including user authentication, database management, payment processing, and email notifications.
