@@ -1,0 +1,50 @@
+{
+  "version": 2,
+  "buildCommand": "npx prisma generate",
+  "builds": [
+    {
+      "src": "src/app.js",
+      "use": "@vercel/node",
+      "config": {
+        "includeFiles": ["prisma/**/*", "src/docs/**/*"]
+      }
+    }
+  ],
+  "rewrites": [
+    { "source": "/api/v1/(.*)", "destination": "/src/app.js" },
+    { "source": "/api-docs", "destination": "/src/app.js" },
+    { "source": "/api-docs/(.*)", "destination": "/src/app.js" },
+    {
+      "source": "/swagger-ui-bundle.js",
+      "destination": "https://cdn.jsdelivr.net/npm/swagger-ui-dist@5.0.0/swagger-ui-bundle.js"
+    },
+    {
+      "source": "/swagger-ui-standalone-preset.js",
+      "destination": "https://cdn.jsdelivr.net/npm/swagger-ui-dist@5.0.0/swagger-ui-standalone-preset.js"
+    },
+    {
+      "source": "/swagger-ui.css",
+      "destination": "https://cdn.jsdelivr.net/npm/swagger-ui-dist@5.0.0/swagger-ui.css"
+    },
+    { "source": "/(.*)", "destination": "/src/app.js" }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "Access-Control-Allow-Origin", "value": "*" },
+        {
+          "key": "Access-Control-Allow-Methods",
+          "value": "GET,POST,PUT,DELETE,PATCH,OPTIONS"
+        },
+        {
+          "key": "Access-Control-Allow-Headers",
+          "value": "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization"
+        }
+      ]
+    }
+  ],
+  "env": {
+    "NODE_ENV": "production"
+  }
+}
