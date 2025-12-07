@@ -100,14 +100,14 @@ describe("TC_PORT_01: Adaptability - Different Content Types", () => {
     // Verify response status is successful or expected error
     // In CI/CD environment without database, may return 500
     expect([200, 500]).toContain(response.status);
-    
+
     // Verify response content-type matches request Accept header
     expect(response.headers["content-type"]).toMatch(/json/);
-    
+
     // Verify response body is valid JSON
     expect(response.body).toBeDefined();
     expect(typeof response.body).toBe("object");
-    
+
     // If successful, verify data structure
     if (response.status === 200) {
       expect(response.body).toHaveProperty("data");

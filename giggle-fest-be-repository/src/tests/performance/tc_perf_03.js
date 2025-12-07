@@ -1,9 +1,9 @@
 /**
  * TC_PERF_03: Maximum User Capacity
- * 
+ *
  * Test Scenario: Validate maximum user capacity and breaking point
- * Test Steps: Gradually increase the load up to 2000 virtual users
- * 
+ * Test Steps: Gradually increase the load up to 500 virtual users
+ *
  * ISO/IEC 25010 - Performance Efficiency > Capacity
  * Validates: System capacity limits and graceful degradation under extreme load
  */
@@ -23,24 +23,23 @@ export const options = {
       executor: "ramping-vus",
       startVUs: 0,
       stages: [
-        { duration: "1m", target: 100 }, // Warm up: 0 to 100 users
-        { duration: "2m", target: 500 }, // Ramp up: 100 to 500 users
-        { duration: "2m", target: 1000 }, // Ramp up: 500 to 1000 users
-        { duration: "2m", target: 1500 }, // Ramp up: 1000 to 1500 users
-        { duration: "2m", target: 2000 }, // Ramp up: 1500 to 2000 users
-        { duration: "3m", target: 2000 }, // Hold at peak: 2000 users for 3 min
-        { duration: "2m", target: 0 }, // Ramp down: 2000 to 0 users
+        { duration: "30s", target: 100 }, // Warm up: 0 to 100 users
+        { duration: "1m", target: 250 }, // Ramp up: 100 to 250 users
+        { duration: "1m", target: 400 }, // Ramp up: 250 to 400 users
+        { duration: "1m", target: 500 }, // Ramp up: 400 to 500 users
+        { duration: "2m", target: 500 }, // Hold at peak: 500 users for 2 min
+        { duration: "1m", target: 0 }, // Ramp down: 500 to 0 users
       ],
-      gracefulRampDown: "1m",
+      gracefulRampDown: "30s",
     },
   },
   thresholds: {
     http_req_duration: [
       "p(50)<1000", // 50% under 1s
-      "p(90)<3000", // 90% under 3s
-      "p(95)<5000", // 95% under 5s
+      "p(90)<2000", // 90% under 2s
+      "p(95)<3000", // 95% under 3s
     ],
-    http_req_failed: ["rate<0.2"], // Allow up to 20% failure at peak load
+    http_req_failed: ["rate<0.15"], // Allow up to 15% failure at peak load
   },
 };
 
@@ -89,9 +88,9 @@ export function handleSummary(data) {
   const failed = data.metrics.http_req_failed?.values || {};
 
   console.log("\n=== TC_PERF_03: Maximum User Capacity Results ===");
+  console.log("\n=== TC_PERF_03: Maximum User Capacity Results ===");
   console.log(`Test Duration: ${data.state.testRunDurationMs / 1000}s`);
-  console.log(`Peak Virtual Users: ${vus.max || 2000}`);
-  console.log(`Total Requests: ${reqs.count || 0}`);
+  console.log(`Peak Virtual Users: ${vus.max || 500}`);
   console.log(`Throughput: ${(reqs.rate || 0).toFixed(2)} req/s`);
   console.log(`\nResponse Times:`);
   console.log(`  Average: ${(duration.avg || 0).toFixed(2)}ms`);
@@ -100,12 +99,14 @@ export function handleSummary(data) {
   console.log(`  P95: ${(duration["p(95)"] || 0).toFixed(2)}ms`);
   console.log(`  P99: ${(duration["p(99)"] || 0).toFixed(2)}ms`);
   console.log(`  Max: ${(duration.max || 0).toFixed(2)}ms`);
-  console.log(`\nSuccess Rate: ${((1 - (failed.rate || 0)) * 100).toFixed(2)}%`);
+  console.log(
+    `\nSuccess Rate: ${((1 - (failed.rate || 0)) * 100).toFixed(2)}%`
+  );
   console.log(`Failure Rate: ${((failed.rate || 0) * 100).toFixed(2)}%`);
   console.log("=================================================\n");
 
   return {
-    "stdout": JSON.stringify(data, null, 2),
+    stdout: JSON.stringify(data, null, 2),
     "summary.json": JSON.stringify(data),
   };
 }

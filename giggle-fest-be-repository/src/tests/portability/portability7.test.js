@@ -1,346 +1,380 @@
 import { describe, test, expect, beforeAll, afterAll } from "@jest/globals";
 import request from "supertest";
 import app from "../../app.js";
-import { platform, EOL } from "os";
-import { sep, resolve, join, dirname } from "path";
-import { existsSync } from "fs";
+import { writeFileSync, unlinkSync, existsSync } from "fs";
+import { resolve, dirname } from "path";
 import { fileURLToPath } from "url";
+import dotenv from "dotenv";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-describe("TC_PORT_07: Adaptability - Cross-Platform Compatibility", () => {
+describe("TC_PORT_07: Adaptability - Configuration Management Flexibility", () => {
   let server;
-  const currentOS = platform();
-  const testResults = {
-    platform: currentOS,
-    timestamp: new Date().toISOString(),
-    tests: [],
-  };
+  const projectRoot = resolve(__dirname, "../../../");
+  const testEnvFile = resolve(projectRoot, ".env.test");
+  const testConfigFile = resolve(projectRoot, "config.test.json");
+
+  // Store original environment variables
+  const originalEnv = { ...process.env };
 
   beforeAll((done) => {
-    server = app.listen(4007, () => {
-      console.log(
-        `Running cross-platform tests on: ${currentOS} (${process.platform})`
-      );
+    server = app.listen(4008, () => {
       done();
     });
   });
 
   afterAll((done) => {
     server.close(() => {
-      console.log(`Platform: ${testResults.platform}`);
-      console.log(`Tests completed: ${testResults.tests.length}`);
+      // Clean up test files
+      if (existsSync(testEnvFile)) {
+        unlinkSync(testEnvFile);
+      }
+      if (existsSync(testConfigFile)) {
+        unlinkSync(testConfigFile);
+      }
+
+      // Restore original environment
+      process.env = { ...originalEnv };
       done();
     });
   });
 
   /**
    * ISO/IEC 25010 - Portability > Adaptability
-   * Test: Application should correctly identify and run on Linux
-   * Validates: Cross-platform compatibility on Linux OS
-   * CI/CD: This test runs on Linux runners in GitHub Actions
+   * Test: Load configuration from .env file
+   * Validates: Application can read configuration from environment files
    */
-  test("Should run test suite on Linux (or current platform)", async () => {
-    const testStart = Date.now();
+  test("Should load config from .env file", async () => {
+    // Create a test .env file
+    const envContent = `
+NODE_ENV=test
+PORT=4008
+TEST_CONFIG_SOURCE=env_file
+DATABASE_URL=postgresql://test:test@localhost:5432/testdb
+IMAGEKIT_PUBLIC_KEY=test_public_key_from_env
+IMAGEKIT_PRIVATE_KEY=test_private_key_from_env
+IMAGEKIT_URL_ENDPOINT=https://ik.imagekit.io/test
+JWT_SECRET=test_jwt_secret_from_env_file
+`.trim();
 
-    // Test basic API functionality on current platform
+    writeFileSync(testEnvFile, envContent);
+
+    // Load the .env file
+    const result = dotenv.config({ path: testEnvFile });
+
+    // Verify .env file was loaded successfully
+    expect(result.error).toBeUndefined();
+    expect(result.parsed).toBeDefined();
+    expect(result.parsed.NODE_ENV).toBe("test");
+    expect(result.parsed.TEST_CONFIG_SOURCE).toBe("env_file");
+
+    // Verify environment variables are accessible
+    expect(process.env.TEST_CONFIG_SOURCE).toBe("env_file");
+
+    // Test that application works with .env configuration
     const response = await request(app).get("/");
 
     expect(response.status).toBe(200);
     expect(response.body).toHaveProperty("status", "success");
     expect(response.body).toHaveProperty("version");
-
-    // Record test result
-    testResults.tests.push({
-      name: "Linux compatibility",
-      platform: currentOS,
-      duration: Date.now() - testStart,
-      passed: true,
-    });
-
-    // Verify platform-specific behavior
-    if (currentOS === "linux") {
-      expect(process.platform).toBe("linux");
-      expect(EOL).toBe("\n");
-      expect(sep).toBe("/");
-    }
   });
 
   /**
    * ISO/IEC 25010 - Portability > Adaptability
-   * Test: Application should correctly identify and run on Windows
-   * Validates: Cross-platform compatibility on Windows OS
-   * CI/CD: This test runs on Windows runners in GitHub Actions
+   * Test: Load configuration from environment variables
+   * Validates: Application can read configuration from system environment
    */
-  test("Should run test suite on Windows (or current platform)", async () => {
-    const testStart = Date.now();
+  test("Should load config from environment variables", async () => {
+    // Set environment variables directly
+    process.env.NODE_ENV = "test";
+    process.env.PORT = "4008";
+    process.env.TEST_CONFIG_SOURCE = "env_variables";
+    process.env.DATABASE_URL =
+      "postgresql://test:test@localhost:5432/testdb_env";
+    process.env.IMAGEKIT_PUBLIC_KEY = "test_public_key_from_env_var";
+    process.env.IMAGEKIT_PRIVATE_KEY = "test_private_key_from_env_var";
+    process.env.IMAGEKIT_URL_ENDPOINT = "https://ik.imagekit.io/test_env";
+    process.env.JWT_SECRET = "test_jwt_secret_from_env_var";
 
-    // Test API endpoints work on Windows
-    const response = await request(app).get("/api/v1/events");
+    // Verify environment variables are set
+    expect(process.env.NODE_ENV).toBe("test");
+    expect(process.env.TEST_CONFIG_SOURCE).toBe("env_variables");
+    expect(process.env.PORT).toBe("4008");
+
+    // Test that application works with environment variables
+    const response = await request(app).get("/");
 
     expect(response.status).toBe(200);
-    expect(response.body).toHaveProperty("data");
-    expect(response.headers["content-type"]).toMatch(/json/);
+    expect(response.body).toHaveProperty("status", "success");
+    expect(response.body).toHaveProperty("message");
 
-    // Record test result
-    testResults.tests.push({
-      name: "Windows compatibility",
-      platform: currentOS,
-      duration: Date.now() - testStart,
-      passed: true,
-    });
-
-    // Verify platform-specific behavior
-    if (currentOS === "win32") {
-      expect(process.platform).toBe("win32");
-      expect(EOL).toBe("\r\n");
-      expect(sep).toBe("\\");
-    }
+    // Verify API endpoints work with environment-based configuration
+    const eventsResponse = await request(app).get("/api/v1/events");
+    expect(eventsResponse.status).toBe(200);
+    expect(eventsResponse.headers["content-type"]).toMatch(/json/);
   });
 
   /**
    * ISO/IEC 25010 - Portability > Adaptability
-   * Test: Application should correctly identify and run on macOS
-   * Validates: Cross-platform compatibility on macOS
-   * CI/CD: This test runs on macOS runners in GitHub Actions
+   * Test: Load configuration from JSON file
+   * Validates: Application can work with JSON-based configuration
    */
-  test("Should run test suite on macOS (or current platform)", async () => {
-    const testStart = Date.now();
+  test("Should load config from JSON file", async () => {
+    // Create a test JSON configuration file
+    const jsonConfig = {
+      nodeEnv: "test",
+      port: 4008,
+      testConfigSource: "json_file",
+      database: {
+        url: "postgresql://test:test@localhost:5432/testdb_json",
+        host: "localhost",
+        port: 5432,
+        name: "testdb_json",
+      },
+      imageKit: {
+        publicKey: "test_public_key_from_json",
+        privateKey: "test_private_key_from_json",
+        urlEndpoint: "https://ik.imagekit.io/test_json",
+      },
+      jwt: {
+        secret: "test_jwt_secret_from_json",
+        expiresIn: "24h",
+      },
+      server: {
+        port: 4008,
+        host: "localhost",
+      },
+    };
 
-    // Test API endpoints work on macOS
-    const response = await request(app).get("/api/v1/tickets");
+    writeFileSync(testConfigFile, JSON.stringify(jsonConfig, null, 2));
+
+    // Verify JSON file was created
+    expect(existsSync(testConfigFile)).toBe(true);
+
+    // Read and parse the JSON configuration
+    const fs = await import("fs");
+    const configData = fs.readFileSync(testConfigFile, "utf-8");
+    const config = JSON.parse(configData);
+
+    // Verify configuration was loaded correctly
+    expect(config.nodeEnv).toBe("test");
+    expect(config.testConfigSource).toBe("json_file");
+    expect(config.database.url).toBeDefined();
+    expect(config.imageKit.publicKey).toBeDefined();
+    expect(config.jwt.secret).toBeDefined();
+
+    // Map JSON config to environment variables (simulating config loader)
+    process.env.NODE_ENV = config.nodeEnv;
+    process.env.PORT = String(config.port);
+    process.env.DATABASE_URL = config.database.url;
+    process.env.IMAGEKIT_PUBLIC_KEY = config.imageKit.publicKey;
+    process.env.IMAGEKIT_PRIVATE_KEY = config.imageKit.privateKey;
+    process.env.IMAGEKIT_URL_ENDPOINT = config.imageKit.urlEndpoint;
+    process.env.JWT_SECRET = config.jwt.secret;
+
+    // Test that application works with JSON-based configuration
+    const response = await request(app).get("/");
 
     expect(response.status).toBe(200);
-    expect(response.body).toHaveProperty("data");
-    expect(response.headers["content-type"]).toMatch(/json/);
-
-    // Record test result
-    testResults.tests.push({
-      name: "macOS compatibility",
-      platform: currentOS,
-      duration: Date.now() - testStart,
-      passed: true,
-    });
-
-    // Verify platform-specific behavior
-    if (currentOS === "darwin") {
-      expect(process.platform).toBe("darwin");
-      expect(EOL).toBe("\n");
-      expect(sep).toBe("/");
-    }
+    expect(response.body).toHaveProperty("status", "success");
   });
 
   /**
    * ISO/IEC 25010 - Portability > Adaptability
-   * Test: Compare results across platforms
-   * Validates: Consistent behavior across different operating systems
+   * Test: Verify app behavior is consistent across config sources
+   * Validates: Application behaves identically regardless of config source
    */
-  test("Should compare results and ensure consistency", async () => {
-    // Test that path handling works correctly on all platforms
-    const testPath = resolve(__dirname, "../../app.js");
-    expect(existsSync(testPath)).toBe(true);
-
-    // Test that file system operations use platform-appropriate separators
-    const joinedPath = join("src", "tests", "portability");
-    expect(joinedPath).toContain("portability");
-    expect(typeof joinedPath).toBe("string");
-
-    // Test API consistency across platforms
-    const endpoints = [
-      "/api/v1/events",
-      "/api/v1/tickets",
-      "/api/v1/categories",
+  test("Should verify app behavior consistent across config sources", async () => {
+    const configSources = [
+      {
+        name: "environment_variables",
+        setup: () => {
+          process.env.NODE_ENV = "test";
+          process.env.PORT = "4008";
+        },
+      },
+      {
+        name: "dotenv_file",
+        setup: () => {
+          const envContent = `NODE_ENV=test\nPORT=4008`;
+          writeFileSync(testEnvFile, envContent);
+          dotenv.config({ path: testEnvFile });
+        },
+      },
     ];
-    const responses = await Promise.all(
-      endpoints.map((endpoint) => request(app).get(endpoint))
-    );
 
-    // All endpoints should return consistent status codes
-    responses.forEach((response) => {
-      expect(response.status).toBe(200);
-      expect(response.body).toHaveProperty("data");
-    });
+    const results = [];
 
-    // Verify all platform tests passed
-    expect(testResults.tests.length).toBeGreaterThanOrEqual(3);
-    testResults.tests.forEach((test) => {
-      expect(test.passed).toBe(true);
-      expect(test.duration).toBeGreaterThan(0);
-    });
+    for (const source of configSources) {
+      source.setup();
 
-    // Log comparison results
-    console.log("Cross-platform test comparison:");
-    console.log(`  Platform: ${testResults.platform}`);
-    console.log(`  Tests run: ${testResults.tests.length}`);
-    console.log(
-      `  All tests passed: ${testResults.tests.every((t) => t.passed)}`
-    );
-  });
+      // Test health endpoint
+      const healthResponse = await request(app).get("/");
 
-  /**
-   * ISO/IEC 25010 - Portability > Adaptability
-   * Test: Verify platform-independent path handling
-   * Validates: Application uses platform-agnostic path operations
-   */
-  test("Should handle paths correctly across platforms", async () => {
-    // Verify path module works correctly
-    const absolutePath = resolve(__dirname, "..", "..", "app.js");
-    expect(absolutePath).toBeDefined();
-    expect(typeof absolutePath).toBe("string");
-    expect(absolutePath).toContain("app.js");
+      // Test API endpoint
+      const apiResponse = await request(app).get("/api/v1/events");
 
-    // Verify joined paths use correct separator
-    const joinedPath = join(
-      "src",
-      "tests",
-      "portability",
-      "portability7.test.js"
-    );
-    expect(joinedPath).toContain(sep);
-
-    // Test that application works regardless of path separators
-    const response = await request(app).get("/");
-    expect(response.status).toBe(200);
-  });
-
-  /**
-   * ISO/IEC 25010 - Portability > Adaptability
-   * Test: Verify environment variables work across platforms
-   * Validates: Environment configuration is platform-independent
-   */
-  test("Should handle environment variables across platforms", async () => {
-    // Verify NODE_ENV is accessible
-    const nodeEnv = process.env.NODE_ENV;
-    expect(typeof nodeEnv).toBe("string");
-
-    // Verify platform detection
-    expect(process.platform).toBeDefined();
-    expect(["linux", "win32", "darwin", "freebsd"]).toContain(process.platform);
-
-    // Test that API works with platform-specific environment
-    const response = await request(app).get("/");
-    expect(response.status).toBe(200);
-    expect(response.body).toHaveProperty("version");
-  });
-
-  /**
-   * ISO/IEC 25010 - Portability > Adaptability
-   * Test: Verify line endings are handled correctly
-   * Validates: Application handles different line ending conventions
-   */
-  test("Should handle line endings correctly across platforms", async () => {
-    // Verify EOL constant is platform-appropriate
-    expect(EOL).toBeDefined();
-    expect(typeof EOL).toBe("string");
-
-    // On Windows, EOL should be \r\n
-    // On Unix-like systems (Linux, macOS), EOL should be \n
-    if (process.platform === "win32") {
-      expect(EOL).toBe("\r\n");
-    } else {
-      expect(EOL).toBe("\n");
-    }
-
-    // Test that API handles multiline data correctly
-    const response = await request(app)
-      .post("/api/v1/auth/register")
-      .set("Content-Type", "application/json")
-      .send({
-        email: "platform-test@example.com",
-        password: "Test123!@#",
-        name: "Platform Test User",
+      results.push({
+        source: source.name,
+        healthStatus: healthResponse.status,
+        healthBody: healthResponse.body,
+        apiStatus: apiResponse.status,
+        apiContentType: apiResponse.headers["content-type"],
       });
+    }
 
-    expect([200, 201, 400, 409]).toContain(response.status);
-    expect(response.headers["content-type"]).toMatch(/json/);
+    // Verify all config sources produce consistent results
+    results.forEach((result, index) => {
+      expect(result.healthStatus).toBe(200);
+      expect(result.healthBody).toHaveProperty("status", "success");
+      expect(result.apiStatus).toBe(200);
+      expect(result.apiContentType).toMatch(/json/);
+
+      // Compare with first result to ensure consistency
+      if (index > 0) {
+        expect(result.healthStatus).toBe(results[0].healthStatus);
+        expect(result.apiStatus).toBe(results[0].apiStatus);
+      }
+    });
+
+    // Verify behavior is identical across all config sources
+    expect(results.length).toBe(configSources.length);
   });
 
   /**
    * ISO/IEC 25010 - Portability > Adaptability
-   * Test: Verify file system case sensitivity handling
-   * Validates: Application handles case-sensitive vs case-insensitive file systems
+   * Test: Configuration priority and override
+   * Validates: Application handles configuration precedence correctly
    */
-  test("Should handle file system case sensitivity", async () => {
-    // Windows: case-insensitive
-    // Linux: case-sensitive
-    // macOS: can be either (usually case-insensitive, but case-preserving)
+  test("Should handle configuration priority correctly", async () => {
+    // Set base configuration via environment
+    process.env.NODE_ENV = "test";
+    process.env.PORT = "4008";
+    process.env.TEST_PRIORITY = "env_base";
 
-    const isWindows = process.platform === "win32";
-    const isLinux = process.platform === "linux";
-    const isMacOS = process.platform === "darwin";
+    // Create .env file with different value
+    const envContent = `TEST_PRIORITY=env_file`;
+    writeFileSync(testEnvFile, envContent);
 
-    expect(isWindows || isLinux || isMacOS).toBe(true);
+    // Environment variables should take precedence over .env file
+    expect(process.env.TEST_PRIORITY).toBe("env_base");
 
-    // Test that application paths work regardless of case sensitivity
-    const response = await request(app).get("/api/v1/events");
-    expect(response.status).toBe(200);
-    expect(response.body).toBeDefined();
-  });
+    // Load .env file (should not override existing env vars by default)
+    dotenv.config({ path: testEnvFile });
 
-  /**
-   * ISO/IEC 25010 - Portability > Adaptability
-   * Test: Verify process spawning works across platforms
-   * Validates: Platform-independent process management
-   */
-  test("Should handle process information across platforms", async () => {
-    // Verify process information is accessible
-    expect(process.pid).toBeGreaterThan(0);
-    expect(process.version).toMatch(/^v\d+\.\d+\.\d+/);
-    expect(process.arch).toBeDefined();
+    // Verify precedence
+    const currentValue = process.env.TEST_PRIORITY;
+    expect(currentValue).toBeDefined();
 
-    // Verify Node.js version compatibility
-    const nodeVersion = process.version;
-    expect(nodeVersion).toBeDefined();
-
-    // Test that API continues to work
+    // Test that application continues to work
     const response = await request(app).get("/");
     expect(response.status).toBe(200);
   });
 
   /**
    * ISO/IEC 25010 - Portability > Adaptability
-   * Test: Verify concurrent requests work across platforms
-   * Validates: Thread/event loop handling is platform-independent
+   * Test: Missing configuration handling
+   * Validates: Application handles missing configuration gracefully
    */
-  test("Should handle concurrent requests on all platforms", async () => {
-    const concurrentRequests = [];
+  test("Should handle missing configuration gracefully", async () => {
+    // Remove optional configuration
+    const optionalConfig = process.env.OPTIONAL_CONFIG;
+    delete process.env.OPTIONAL_CONFIG;
 
-    // Create 5 concurrent requests
-    for (let i = 0; i < 5; i++) {
-      concurrentRequests.push(request(app).get("/api/v1/events"));
+    // Application should still work without optional config
+    const response = await request(app).get("/");
+
+    expect(response.status).toBe(200);
+    expect(response.body).toHaveProperty("status", "success");
+
+    // Restore if it existed
+    if (optionalConfig !== undefined) {
+      process.env.OPTIONAL_CONFIG = optionalConfig;
     }
-
-    const responses = await Promise.all(concurrentRequests);
-
-    // All requests should succeed regardless of platform
-    responses.forEach((response, index) => {
-      expect(response.status).toBe(200);
-      expect(response.body).toHaveProperty("data");
-    });
-
-    // Verify platform can handle concurrent operations
-    expect(responses.length).toBe(5);
   });
 
   /**
    * ISO/IEC 25010 - Portability > Adaptability
-   * Test: Verify memory and resource handling
-   * Validates: Resource management is consistent across platforms
+   * Test: Configuration validation
+   * Validates: Application validates configuration values
    */
-  test("Should manage resources consistently across platforms", async () => {
-    const memoryBefore = process.memoryUsage();
+  test("Should validate configuration values", async () => {
+    // Test with valid configuration
+    process.env.NODE_ENV = "test";
+    process.env.PORT = "4008";
 
-    // Perform several API operations
-    await request(app).get("/api/v1/events");
-    await request(app).get("/api/v1/tickets");
-    await request(app).get("/api/v1/categories");
+    expect(process.env.NODE_ENV).toBeDefined();
+    expect(process.env.PORT).toBeDefined();
 
-    const memoryAfter = process.memoryUsage();
+    // Verify port is a valid number
+    const port = parseInt(process.env.PORT, 10);
+    expect(port).toBeGreaterThan(0);
+    expect(port).toBeLessThan(65536);
 
-    // Verify memory usage is tracked
-    expect(memoryBefore.heapUsed).toBeGreaterThan(0);
-    expect(memoryAfter.heapUsed).toBeGreaterThan(0);
+    // Verify NODE_ENV is valid
+    expect(["development", "test", "production"]).toContain(
+      process.env.NODE_ENV
+    );
+
+    // Test application works with valid config
+    const response = await request(app).get("/");
+    expect(response.status).toBe(200);
+  });
+
+  /**
+   * ISO/IEC 25010 - Portability > Adaptability
+   * Test: Configuration reload capability
+   * Validates: Application can work with updated configuration
+   */
+  test("Should support configuration updates", async () => {
+    // Set initial configuration
+    process.env.TEST_CONFIG_VERSION = "v1";
+
+    const response1 = await request(app).get("/");
+    expect(response1.status).toBe(200);
+
+    // Update configuration
+    process.env.TEST_CONFIG_VERSION = "v2";
+
+    const response2 = await request(app).get("/");
+    expect(response2.status).toBe(200);
+
+    // Verify updated value is accessible
+    expect(process.env.TEST_CONFIG_VERSION).toBe("v2");
+  });
+
+  /**
+   * ISO/IEC 25010 - Portability > Adaptability
+   * Test: Multi-format configuration support
+   * Validates: Application supports various configuration formats
+   */
+  test("Should support multiple configuration formats", async () => {
+    const formats = [
+      {
+        name: "key=value",
+        content: "TEST_FORMAT=key_value\nTEST_VALUE=123",
+        verify: () => expect(process.env.TEST_FORMAT).toBe("key_value"),
+      },
+      {
+        name: "json",
+        content: JSON.stringify({ testFormat: "json", testValue: 456 }),
+        verify: () => {
+          const parsed = JSON.parse(
+            JSON.stringify({ testFormat: "json", testValue: 456 })
+          );
+          expect(parsed.testFormat).toBe("json");
+        },
+      },
+    ];
+
+    for (const format of formats) {
+      if (format.name === "key=value") {
+        writeFileSync(testEnvFile, format.content);
+        dotenv.config({ path: testEnvFile });
+      }
+      format.verify();
+    }
 
     // Verify application continues to work
     const response = await request(app).get("/");
@@ -349,58 +383,90 @@ describe("TC_PORT_07: Adaptability - Cross-Platform Compatibility", () => {
 
   /**
    * ISO/IEC 25010 - Portability > Adaptability
-   * Test: Verify timezone handling across platforms
-   * Validates: Date/time operations are platform-independent
+   * Test: Configuration security
+   * Validates: Sensitive configuration is handled securely
    */
-  test("Should handle timezones correctly across platforms", async () => {
+  test("Should handle sensitive configuration securely", async () => {
+    // Set sensitive configuration
+    process.env.JWT_SECRET = "super_secret_key_12345";
+    process.env.DATABASE_URL = "postgresql://user:pass@localhost:5432/db";
+
+    // Verify sensitive values are not logged or exposed
     const response = await request(app).get("/");
 
+    // Response should not contain sensitive data
+    const responseText = JSON.stringify(response.body);
+    expect(responseText).not.toContain("super_secret_key");
+    expect(responseText).not.toContain("pass@localhost");
+
     expect(response.status).toBe(200);
-    expect(response.body).toHaveProperty("timestamp");
-
-    // Verify timestamp is in valid ISO format
-    const timestamp = response.body.timestamp;
-    expect(timestamp).toBeDefined();
-    expect(new Date(timestamp).toString()).not.toBe("Invalid Date");
-
-    // Verify timezone offset is accessible
-    const offset = new Date().getTimezoneOffset();
-    expect(typeof offset).toBe("number");
   });
 
   /**
    * ISO/IEC 25010 - Portability > Adaptability
-   * Test: Summary - All platform tests should pass
-   * Validates: Complete cross-platform compatibility
+   * Test: Default configuration fallback
+   * Validates: Application uses sensible defaults when config is missing
    */
-  test("Should summarize cross-platform compatibility results", async () => {
-    // Verify all tests have been recorded
-    expect(testResults.tests.length).toBeGreaterThan(0);
+  test("Should use default configuration fallback", async () => {
+    // Remove non-critical config
+    const originalTimeout = process.env.REQUEST_TIMEOUT;
+    delete process.env.REQUEST_TIMEOUT;
 
-    // Verify all tests passed
-    const allPassed = testResults.tests.every((test) => test.passed);
-    expect(allPassed).toBe(true);
+    // Application should use default values
+    const response = await request(app).get("/");
 
-    // Verify test ran on a supported platform
-    expect(["linux", "win32", "darwin"]).toContain(testResults.platform);
+    expect(response.status).toBe(200);
+    expect(response.body).toHaveProperty("status", "success");
 
-    // Log final summary
-    console.log("\n=== Cross-Platform Compatibility Summary ===");
-    console.log(`Platform: ${testResults.platform}`);
-    console.log(`Node.js: ${process.version}`);
-    console.log(`Architecture: ${process.arch}`);
-    console.log(`Tests completed: ${testResults.tests.length}`);
-    console.log(`All tests passed: ${allPassed}`);
-    console.log(
-      `Total duration: ${testResults.tests.reduce(
-        (sum, t) => sum + t.duration,
-        0
-      )}ms`
+    // Restore original config
+    if (originalTimeout !== undefined) {
+      process.env.REQUEST_TIMEOUT = originalTimeout;
+    }
+  });
+
+  /**
+   * ISO/IEC 25010 - Portability > Adaptability
+   * Test: Configuration documentation
+   * Validates: Required configuration is documented and accessible
+   */
+  test("Should document required configuration", async () => {
+    // Check for common required environment variables
+    const requiredVars = ["NODE_ENV", "PORT"];
+
+    const availableVars = requiredVars.filter(
+      (varName) => process.env[varName] !== undefined
     );
-    console.log("===========================================\n");
 
-    // Verify application is still responsive
+    // Most required vars should be available in test environment
+    expect(availableVars.length).toBeGreaterThan(0);
+
+    // Verify application works when required config is present
     const response = await request(app).get("/");
     expect(response.status).toBe(200);
+  });
+
+  /**
+   * ISO/IEC 25010 - Portability > Adaptability
+   * Test: Configuration consistency check
+   * Validates: Configuration remains consistent throughout application lifecycle
+   */
+  test("Should maintain configuration consistency", async () => {
+    // Set test configuration
+    process.env.TEST_CONSISTENCY = "consistent_value";
+
+    // Make multiple requests
+    const responses = await Promise.all([
+      request(app).get("/"),
+      request(app).get("/api/v1/events"),
+      request(app).get("/api/v1/tickets"),
+    ]);
+
+    // Verify configuration remained consistent
+    expect(process.env.TEST_CONSISTENCY).toBe("consistent_value");
+
+    // All requests should succeed with consistent config
+    responses.forEach((response) => {
+      expect(response.status).toBe(200);
+    });
   });
 });

@@ -1,0 +1,171 @@
+{
+    "metrics": {
+        "vus": {
+            "max": 11,
+            "value": 10,
+            "min": 0
+        },
+        "http_reqs": {
+            "count": 11799,
+            "rate": 196.33827012898126
+        },
+        "http_req_receiving": {
+            "max": 11.279,
+            "p(90)": 0.7575400000000004,
+            "p(95)": 0.98031,
+            "avg": 0.256868149843208,
+            "min": 0,
+            "med": 0
+        },
+        "data_sent": {
+            "count": 887317,
+            "rate": 14765.173729641265
+        },
+        "checks": {
+            "passes": 23196,
+            "fails": 402,
+            "value": 0.9829646580218663
+        },
+        "custom_response_time": {
+            "avg": 2.8917232367649666,
+            "min": 0,
+            "med": 2.4987500000000002,
+            "max": 371.7258,
+            "p(90)": 4.30299,
+            "p(95)": 4.639135,
+            "thresholds": {
+                "p(99)<1000": false,
+                "p(95)<500": false
+            }
+        },
+        "successful_requests": {
+            "count": 11598,
+            "rate": 192.99358055393887
+        },
+        "http_req_duration": {
+            "max": 371.7258,
+            "p(90)": 4.29756,
+            "p(95)": 4.62902,
+            "avg": 2.843285558098151,
+            "min": 0,
+            "med": 2.0563,
+            "thresholds": {
+                "p(95)<500": false,
+                "p(99)<1000": false
+            }
+        },
+        "http_req_tls_handshaking": {
+            "avg": 0,
+            "min": 0,
+            "med": 0,
+            "max": 0,
+            "p(90)": 0,
+            "p(95)": 0
+        },
+        "http_req_waiting": {
+            "avg": 2.580351241630644,
+            "min": 0,
+            "med": 1.818,
+            "max": 371.236,
+            "p(90)": 4.055180000000001,
+            "p(95)": 4.34316
+        },
+        "iteration_duration": {
+            "avg": 102.9805488333335,
+            "min": 0.7825,
+            "med": 105.3437,
+            "max": 523.2358,
+            "p(90)": 106.56953,
+            "p(95)": 107.17317
+        },
+        "http_req_blocked": {
+            "min": 0,
+            "med": 0,
+            "max": 3.0955,
+            "p(90)": 0,
+            "p(95)": 0,
+            "avg": 0.008553072294262228
+        },
+        "iterations": {
+            "count": 6000,
+            "rate": 99.84147985201183
+        },
+        "http_req_sending": {
+            "min": 0,
+            "med": 0,
+            "max": 1.1525,
+            "p(90)": 0,
+            "p(95)": 0,
+            "avg": 0.006066166624290192
+        },
+        "http_req_duration{expected_response:true}": {
+            "p(95)": 4.639135,
+            "avg": 2.8917232367649666,
+            "min": 0,
+            "med": 2.4987500000000002,
+            "max": 371.7258,
+            "p(90)": 4.30299
+        },
+        "vus_max": {
+            "max": 50,
+            "value": 50,
+            "min": 50
+        },
+        "data_received": {
+            "rate": 336001.82374440756,
+            "count": 20192118
+        },
+        "http_req_failed": {
+            "fails": 11598,
+            "passes": 201,
+            "thresholds": {
+                "rate<0.05": false
+            },
+            "value": 0.01703534197813374
+        },
+        "http_req_connecting": {
+            "max": 2.6066,
+            "p(90)": 0,
+            "p(95)": 0,
+            "avg": 0.007060717009916096,
+            "min": 0,
+            "med": 0
+        }
+    },
+    "root_group": {
+        "groups": {},
+        "checks": {
+                "health status is 200": {
+                    "id": "ab698ad652ee317628077e42e47eda00",
+                    "passes": 5799,
+                    "fails": 201,
+                    "name": "health status is 200",
+                    "path": "::health status is 200"
+                },
+                "health has valid response": {
+                    "name": "health has valid response",
+                    "path": "::health has valid response",
+                    "id": "4081fa953ef428cfb6641a97ebed0723",
+                    "passes": 5799,
+                    "fails": 201
+                },
+                "events status is 200 or 500": {
+                    "id": "992f28280dc7bc9f0de9ec185b4982bb",
+                    "passes": 5799,
+                    "fails": 0,
+                    "name": "events status is 200 or 500",
+                    "path": "::events status is 200 or 500"
+                },
+                "events response time < 500ms": {
+                    "fails": 0,
+                    "name": "events response time < 500ms",
+                    "path": "::events response time < 500ms",
+                    "id": "9507d30a5f5e5137c898c18f80b7e8f8",
+                    "passes": 5799
+                }
+            },
+        "name": "",
+        "path": "",
+        "id": "d41d8cd98f00b204e9800998ecf8427e"
+    }
+}

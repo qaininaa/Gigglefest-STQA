@@ -34,6 +34,44 @@ app.get("/", (req, res) => {
   });
 });
 
+// Metrics endpoint for performance monitoring
+app.get("/metrics", (req, res) => {
+  const memoryUsage = process.memoryUsage();
+  const uptime = process.uptime();
+
+  res.json({
+    status: "success",
+    timestamp: new Date().toISOString(),
+    uptime: {
+      seconds: Math.floor(uptime),
+      formatted: `${Math.floor(uptime / 60)}m ${Math.floor(uptime % 60)}s`,
+    },
+    memory: {
+      rss: {
+        bytes: memoryUsage.rss,
+        mb: (memoryUsage.rss / 1024 / 1024).toFixed(2),
+      },
+      heapTotal: {
+        bytes: memoryUsage.heapTotal,
+        mb: (memoryUsage.heapTotal / 1024 / 1024).toFixed(2),
+      },
+      heapUsed: {
+        bytes: memoryUsage.heapUsed,
+        mb: (memoryUsage.heapUsed / 1024 / 1024).toFixed(2),
+      },
+      external: {
+        bytes: memoryUsage.external,
+        mb: (memoryUsage.external / 1024 / 1024).toFixed(2),
+      },
+    },
+    process: {
+      pid: process.pid,
+      version: process.version,
+      platform: process.platform,
+    },
+  });
+});
+
 app.use("/api/v1", routes);
 app.use("/api-docs", documentationRoutes);
 

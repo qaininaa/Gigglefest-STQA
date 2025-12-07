@@ -4,7 +4,12 @@ import ImageKit from "imagekit";
 let imagekit = null;
 
 const getImageKit = () => {
-  if (!imagekit && process.env.IMAGEKIT_PUBLIC_KEY && process.env.IMAGEKIT_PRIVATE_KEY && process.env.IMAGEKIT_URL_ENDPOINT) {
+  if (
+    !imagekit &&
+    process.env.IMAGEKIT_PUBLIC_KEY &&
+    process.env.IMAGEKIT_PRIVATE_KEY &&
+    process.env.IMAGEKIT_URL_ENDPOINT
+  ) {
     imagekit = new ImageKit({
       publicKey: process.env.IMAGEKIT_PUBLIC_KEY,
       privateKey: process.env.IMAGEKIT_PRIVATE_KEY,
@@ -17,7 +22,7 @@ const getImageKit = () => {
 export const uploadImage = async (file) => {
   try {
     const kit = getImageKit();
-    
+
     // Jika ImageKit tidak tersedia (test environment), return mock URL
     if (!kit) {
       console.warn("ImageKit not configured, using mock upload for testing");

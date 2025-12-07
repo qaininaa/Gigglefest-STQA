@@ -1,9 +1,9 @@
 /**
  * TC_PERF_01: Response Time Verification
- * 
+ *
  * Test Scenario: Verify response time under sustained load
  * Test Steps: Run 100 requests per second and measure p95 and p99 latency
- * 
+ *
  * ISO/IEC 25010 - Performance Efficiency > Time Behaviour
  * Validates: Response time meets acceptable thresholds under load
  */
@@ -35,10 +35,7 @@ export const options = {
       "p(99)<1000", // 99% of requests should be below 1000ms
     ],
     http_req_failed: ["rate<0.05"], // Error rate should be below 5%
-    custom_response_time: [
-      "p(95)<500",
-      "p(99)<1000",
-    ],
+    custom_response_time: ["p(95)<500", "p(99)<1000"],
   },
 };
 
@@ -88,13 +85,19 @@ export function handleSummary(data) {
     `Request Rate: ${data.metrics.http_reqs.values.rate.toFixed(2)} req/s`
   );
   console.log(
-    `P95 Response Time: ${data.metrics.http_req_duration.values["p(95)"].toFixed(2)}ms`
+    `P95 Response Time: ${data.metrics.http_req_duration.values[
+      "p(95)"
+    ].toFixed(2)}ms`
   );
   console.log(
-    `P99 Response Time: ${data.metrics.http_req_duration.values["p(99)"].toFixed(2)}ms`
+    `P99 Response Time: ${data.metrics.http_req_duration.values[
+      "p(99)"
+    ].toFixed(2)}ms`
   );
   console.log(
-    `Average Response Time: ${data.metrics.http_req_duration.values.avg.toFixed(2)}ms`
+    `Average Response Time: ${data.metrics.http_req_duration.values.avg.toFixed(
+      2
+    )}ms`
   );
   console.log(
     `Failed Requests: ${data.metrics.http_req_failed.values.rate * 100}%`
@@ -102,6 +105,6 @@ export function handleSummary(data) {
   console.log("==============================================\n");
 
   return {
-    "stdout": JSON.stringify(data, null, 2),
+    stdout: JSON.stringify(data, null, 2),
   };
 }
