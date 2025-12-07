@@ -57,9 +57,9 @@ describe("AUTH API TESTING", () => {
   // TC_AUTH_04 — Register User valid
   test("TC_AUTH_04 - Register user valid", async () => {
     const res = await request(app).post("/api/v1/auth/register").send({
-      email: "anggi@gmail.com",
+      email: "rangga@gmail.com",
       password: "password",
-      name: "anggi",
+      name: "rangga",
       phoneNumber: "086752553678",
       age: 22,
     });
@@ -105,7 +105,7 @@ describe("AUTH API TESTING", () => {
   });
 
   // TC_AUTH_8 — Akses users dengan token valid dan role user
-  test("TC_AUTH_08 - Akses users dengan token valid dan role admin", async () => {
+  test("TC_AUTH_08 - Akses users dengan token valid dan role user", async () => {
     const res = await request(app)
       .get("/api/v1/users")
       .set("Authorization", `Bearer ${userToken}`);
