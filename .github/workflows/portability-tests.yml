@@ -2,22 +2,22 @@ name: Portability Tests - Cross Platform
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [main, develop]
   pull_request:
-    branches: [ main, develop ]
+    branches: [main, develop]
   workflow_dispatch:
 
 jobs:
   portability-tests:
     name: Test on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
-    
+
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
         node-version: [20.x]
       fail-fast: false
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -26,8 +26,8 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
-          cache: 'npm'
-          cache-dependency-path: 'giggle-fest-be-repository/package-lock.json'
+          cache: "npm"
+          cache-dependency-path: "giggle-fest-be-repository/package-lock.json"
 
       - name: Install dependencies
         working-directory: ./giggle-fest-be-repository
@@ -45,10 +45,7 @@ jobs:
           echo "NODE_ENV=test" > .env
           echo "PORT=3000" >> .env
           echo "DATABASE_URL=${{ secrets.DATABASE_URL || 'postgresql://test:test@localhost:5432/testdb' }}" >> .env
-          echo "JWT_SECRET=${{ secrets.JWT_SECRET || 'test_secret_key_for_testing' }}" >> .env
-          echo "IMAGEKIT_PUBLIC_KEY=${{ secrets.IMAGEKIT_PUBLIC_KEY || 'test_public_key' }}" >> .env
-          echo "IMAGEKIT_PRIVATE_KEY=${{ secrets.IMAGEKIT_PRIVATE_KEY || 'test_private_key' }}" >> .env
-          echo "IMAGEKIT_URL_ENDPOINT=${{ secrets.IMAGEKIT_URL_ENDPOINT || 'https://ik.imagekit.io/test' }}" >> .env
+          echo "JWT_SECRET=${{ secrets.JWT_SECRET || 'test_secret_key_for_testing_12345' }}" >> .env
         shell: bash
 
       - name: Run Portability Test 1 - Adaptability (Content Types)
@@ -104,12 +101,12 @@ jobs:
   portability-docker:
     name: Docker Tests on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
-    
+
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest]
       fail-fast: false
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -118,8 +115,8 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20.x
-          cache: 'npm'
-          cache-dependency-path: 'giggle-fest-be-repository/package-lock.json'
+          cache: "npm"
+          cache-dependency-path: "giggle-fest-be-repository/package-lock.json"
 
       - name: Install dependencies
         working-directory: ./giggle-fest-be-repository
@@ -138,10 +135,7 @@ jobs:
           echo "NODE_ENV=test" > .env
           echo "PORT=3000" >> .env
           echo "DATABASE_URL=${{ secrets.DATABASE_URL || 'postgresql://test:test@localhost:5432/testdb' }}" >> .env
-          echo "JWT_SECRET=${{ secrets.JWT_SECRET || 'test_secret_key_for_testing' }}" >> .env
-          echo "IMAGEKIT_PUBLIC_KEY=${{ secrets.IMAGEKIT_PUBLIC_KEY || 'test_public_key' }}" >> .env
-          echo "IMAGEKIT_PRIVATE_KEY=${{ secrets.IMAGEKIT_PRIVATE_KEY || 'test_private_key' }}" >> .env
-          echo "IMAGEKIT_URL_ENDPOINT=${{ secrets.IMAGEKIT_URL_ENDPOINT || 'https://ik.imagekit.io/test' }}" >> .env
+          echo "JWT_SECRET=${{ secrets.JWT_SECRET || 'test_secret_key_for_testing_12345' }}" >> .env
         shell: bash
 
       - name: Run Portability Test 6 - Installability (Docker)
@@ -166,11 +160,11 @@ jobs:
     needs: [portability-tests, portability-docker]
     runs-on: ubuntu-latest
     if: always()
-    
+
     steps:
       - name: Download all artifacts
         uses: actions/download-artifact@v4
-        
+
       - name: Display test summary
         run: |
           echo "## Portability Tests Summary" >> $GITHUB_STEP_SUMMARY
