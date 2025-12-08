@@ -32,7 +32,7 @@ services:
       - "8081:8080"
     environment:
       DATABASE_URL: postgresql://testuser:testpass@postgres-test:5432/gigglefest_test
-      NODE_ENV: test
+      NODE_ENV: production
       PORT: 8080
       JWT_SECRET: test-secret-key-portability
       JWT_EXPIRES_IN: 1h
@@ -40,11 +40,11 @@ services:
       postgres-test:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 15s
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/v1/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 30s
     networks:
       - portability-test
 
@@ -61,7 +61,7 @@ services:
       - "8082:8080"
     environment:
       DATABASE_URL: postgresql://testuser:testpass@postgres-test:5432/gigglefest_test
-      NODE_ENV: test
+      NODE_ENV: production
       PORT: 8080
       JWT_SECRET: test-secret-key-portability
       JWT_EXPIRES_IN: 1h
@@ -69,11 +69,11 @@ services:
       postgres-test:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 15s
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/v1/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 30s
     networks:
       - portability-test
 

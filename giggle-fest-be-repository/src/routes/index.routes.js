@@ -12,6 +12,11 @@ import notificationRoutes from "./notification.routes.js";
 
 const router = Router();
 
+// Health check endpoint for Docker
+router.get("/health", (req, res) => {
+  res.status(200).json({ status: "OK", timestamp: new Date().toISOString() });
+});
+
 router.use("/auth", authRoutes);
 router.use("/users", userRoutes);
 router.use("/events", eventRoutes);

@@ -12,8 +12,17 @@ export const createEventService = async (data, file) => {
 
 export const getAllEventsService = async (query) => {
   const { page = 1, limit = 10, search, category, startDate, endDate } = query;
-  const skip = (page - 1) * limit;
-  const take = parseInt(limit);
+
+  // Validate and parse pagination parameters
+  const parsedPage = parseInt(page);
+  const parsedLimit = parseInt(limit);
+
+  // Default to 1 if invalid
+  const validPage = isNaN(parsedPage) || parsedPage < 1 ? 1 : parsedPage;
+  const validLimit = isNaN(parsedLimit) || parsedLimit < 1 ? 10 : parsedLimit;
+
+  const skip = (validPage - 1) * validLimit;
+  const take = validLimit;
 
   const where = {};
 
@@ -47,10 +56,10 @@ export const getAllEventsService = async (query) => {
   return {
     events,
     meta: {
-      page: parseInt(page),
-      limit: parseInt(limit),
+      page: validPage,
+      limit: validLimit,
       total,
-      totalPages: Math.ceil(total / limit),
+      totalPages: Math.ceil(total / validLimit),
     },
   };
 };

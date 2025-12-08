@@ -50,5 +50,13 @@ EXPOSE 8080
 HEALTHCHECK --interval=10s --timeout=5s --start-period=10s --retries=3 \
   CMD curl -f http://localhost:8080/ || exit 1
 
-# Start application
-CMD ["node", "src/app.js"]
+# Create startup script that runs migrations before starting server
+RUN echo '#!/bin/sh' > /app/start.sh && \
+    echo 'echo "Running database migrations..."' >> /app/start.sh && \
+    echo 'npx prisma migrate deploy' >> /app/start.sh && \
+    echo 'echo "Starting application..."' >> /app/start.sh && \
+    echo 'node src/app.js' >> /app/start.sh && \
+    chmod +x /app/start.sh
+
+# Start application with migrations
+CMD ["/app/start.sh"]
