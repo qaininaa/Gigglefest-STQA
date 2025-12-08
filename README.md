@@ -13,6 +13,8 @@
 
 ## 🚀 Setup Project
 
+### setup project
+
 ### 1. Clone Repository
 
 ```bash
@@ -57,6 +59,8 @@ npm run dev
 ---
 
 ## 🧪 Testing Backend (Jest)
+
+### Testing Backend (Jest)
 
 Backend menggunakan **Jest** untuk unit testing, integration testing, dan berbagai test case ISO/IEC 25010.
 
@@ -165,6 +169,8 @@ npm test -- src/tests/services-test/event.service.test.js
 
 ## 🎭 Testing Frontend (Cypress)
 
+### Testing Frontend (Cypress)
+
 Frontend menggunakan **Cypress** untuk E2E testing, UI testing, dan accessibility testing.
 
 ### Struktur Folder Testing
@@ -234,6 +240,8 @@ npx cypress run --spec "cypress/e2e/TC_UI_06*.cy.js"
 ---
 
 ## 🐳 Testing Portability (Docker)
+
+### Testing Portability (Docker)
 
 Testing cross-platform portability menggunakan Docker untuk menguji aplikasi di berbagai arsitektur (AMD64, ARM64).
 
@@ -344,6 +352,8 @@ Success Rate: 100.0%
 ---
 
 ## 🔒 Testing SQL Injection (SQLMap)
+
+### Testing SQL Injection (SQLMap)
 
 SQLMap adalah tools untuk penetration testing yang digunakan untuk mendeteksi dan mengeksploitasi SQL injection vulnerabilities.
 
